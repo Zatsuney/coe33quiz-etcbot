@@ -32,7 +32,10 @@ const commands = [
     .setDescription('Affiche le nombre de questions disponibles dans le quiz'),
   new SlashCommandBuilder()
     .setName('btnumber')
-    .setDescription('Affiche le nombre d\'extraits disponibles pour le blindtest')
+    .setDescription('Affiche le nombre d\'extraits disponibles pour le blindtest'),
+  new SlashCommandBuilder()
+    .setName('randomise')
+    .setDescription('Sélectionne 3 personnages, 1 arme, 6 skills et 3 pictos aléatoires pour chacun')
 ].map(cmd => cmd.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);

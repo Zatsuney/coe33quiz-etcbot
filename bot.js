@@ -8,6 +8,7 @@ const path = require('path');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection } = require('@discordjs/voice');
 const ffmpegPath = require('ffmpeg-static');
 const ffmpeg = require('fluent-ffmpeg');
+const { weapons, skills, pictos } = require('./randomizer.js');
 
 // Ajoute MessageContent ici :
 const client = new Client({
@@ -350,8 +351,18 @@ function removeDiacritics(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+function getRandom(arr, n) {
+  const copy = [...arr];
+  const result = [];
+  for (let i = 0; i < n && copy.length; i++) {
+    const idx = Math.floor(Math.random() * copy.length);
+    result.push(copy.splice(idx, 1)[0]);
+  }
+  return result;
+}
+
 client.on('interactionCreate', async interaction => {
-  if (!interaction.isChatInputCommand()) return;
+  if (!interaction.isCommand()) return;
 
   if (interaction.commandName === 'quiz') {
     const q = quizQuestions[Math.floor(Math.random() * quizQuestions.length)];
@@ -558,6 +569,25 @@ client.on('interactionCreate', async interaction => {
     const musiqueDir = path.join(__dirname, 'musique');
     const fichiers = fs.readdirSync(musiqueDir).filter(f => f.endsWith('.mp3') || f.endsWith('.wav') || f.endsWith('.ogg'));
     await interaction.reply(`Il y a actuellement **${fichiers.length}** extraits disponibles pour le blindtest !`);
+  }
+
+  if (interaction.commandName === 'randomise') {
+    const characters = Object.keys(weapons);
+    const selectedChars = getRandom(characters, 3);
+
+    let message = '';
+    for (const char of selectedChars) {
+      const weapon = getRandom(weapons[char], 1)[0];
+      const charSkills = getRandom(skills[char], 6);
+      const charPictos = getRandom(pictos, 3);
+
+      message += `**${char.charAt(0).toUpperCase() + char.slice(1)}**\n`;
+      message += `Arme : ${weapon}\n`;
+      message += `Skills : ${charSkills.join(', ')}\n`;
+      message += `Pictos : ${charPictos.join(', ')}\n\n`;
+    }
+
+    await interaction.reply(message);
   }
 });
 
