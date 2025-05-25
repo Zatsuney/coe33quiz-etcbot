@@ -1,4 +1,6 @@
 require('dotenv').config();
+const express = require('express'); // ← AJOUTE CETTE LIGNE
+const app = express();
 const { Client, GatewayIntentBits } = require('discord.js');
 const { addPoint, getLeaderboard, refreshUsernames, removeScore } = require('./scoreboard');
 const fs = require('fs');
@@ -564,3 +566,6 @@ client.on('guildMemberRemove', member => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+
+app.get('/', (req, res) => res.send('Bot is running!'));
+app.listen(process.env.PORT || 3000);
