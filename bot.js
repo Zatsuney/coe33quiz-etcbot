@@ -4,6 +4,8 @@ const { addPoint, getLeaderboard, refreshUsernames, removeScore } = require('./s
 const fs = require('fs');
 const path = require('path');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection } = require('@discordjs/voice');
+const ffmpegPath = require('ffmpeg-static');
+const ffmpeg = require('fluent-ffmpeg');
 
 // Ajoute MessageContent ici :
 const client = new Client({
@@ -14,6 +16,8 @@ const client = new Client({
     GatewayIntentBits.GuildVoiceStates // ← IMPORTANT !
   ]
 });
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const quizQuestions = [
   {
