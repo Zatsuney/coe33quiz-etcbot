@@ -408,7 +408,7 @@ const lumina = [
   { nom: "Bouclier basique", cout: 20 },
   { nom: "Bouclier Surpuissant", cout: 5 },
   { nom: "Bouclier Affinés", cout: 15 },
-  { nom: "Bouclier Fracturante", cout: 0 }, // coût non précisé, à ajuster
+  { nom: "Brulures Fracturante", cout: 5 }, // coût non précisé, à ajuster
   { nom: "Brûlures Critiques", cout: 5 },
   { nom: "Brûlure Prolongée", cout: 15 },
   { nom: "Brûlure energisante", cout: 10 },
@@ -416,7 +416,7 @@ const lumina = [
   { nom: "Canon de verre", cout: 10 },
   { nom: "Carapace Améliorée", cout: 10 },
   { nom: "Carapace Immédiate", cout: 10 },
-  { nom: "Carapace Prolongée", cout: 0 }, // coût non précisé, à ajuster
+  { nom: "Carapace Prolongée", cout: 10 }, // coût non précisé, à ajuster
   { nom: "Carapace Surpuissante", cout: 10 },
   { nom: "Charges sur altération", cout: 10 },
   { nom: "Charges sur attaque", cout: 7 },
@@ -486,7 +486,7 @@ const lumina = [
   { nom: "Gradient Combattant", cout: 5 },
   { nom: "Hardiesse", cout: 15 },
   { nom: "Initiative Améliorée", cout: 5 },
-  { nom: "Initiative", cout: 0 }, // coût non précisé, à ajuster
+  { nom: "Initiative", cout: 10 }, // coût non précisé, à ajuster
   { nom: "Instant Critique", cout: 5 },
   { nom: "Insaisissable", cout: 1 },
   { nom: "Immaculé", cout: 10 },
@@ -505,7 +505,7 @@ const lumina = [
   { nom: "Mort Curative", cout: 5 },
   { nom: "Mort Energissante", cout: 5 },
   { nom: "Mort Fracturante", cout: 5 },
-  { nom: "Mort Subite", cout: 0 }, // coût non précisé, à ajuster
+  { nom: "Mort Subite", cout: 1 }, // coût non précisé, à ajuster
   { nom: "Parade Curative", cout: 5 },
   { nom: "Parade Périlleuse", cout: 5 },
   { nom: "Parade renforçante", cout: 5 },

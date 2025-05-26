@@ -632,14 +632,14 @@ client.on('interactionCreate', async interaction => {
       const charSkills = getRandom(skills[char], 6);
 
       message += `**${char.charAt(0).toUpperCase() + char.slice(1)}**\n`;
-      message += `Arme : ${weapon}\n`;
-      message += `Skills : ${charSkills.join(', ')}\n`;
-      message += `Pictos : ${pictosByChar[i].join(', ')}\n`;
+      message += `**Arme :** ${weapon}\n`;
+      message += `**Skills :** ${charSkills.join(', ')}\n`;
+      message += `**Pictos :** ${pictosByChar[i].join(', ')}\n`;
       if (luminasByChar[i] && luminasByChar[i].length > 0) {
         const total = luminasByChar[i].reduce((sum, l) => sum + l.cout, 0);
-        message += `Luminas (${total}/${coutMax}) : ${luminasByChar[i].map(l => `${l.nom} (${l.cout})`).join(', ')}\n`;
+        message += `**Luminas (${total}/${coutMax}) :** ${luminasByChar[i].map(l => `${l.nom} (${l.cout})`).join(', ')}\n`;
       } else {
-        message += `Luminas : Aucun disponible pour ce coût max\n`;
+        message += `**Luminas :** Aucun disponible pour ce coût max\n`;
       }
       message += `\n`;
     }
