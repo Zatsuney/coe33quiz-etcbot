@@ -589,32 +589,28 @@ client.on('interactionCreate', async interaction => {
     const characters = Object.keys(weapons);
     const selectedChars = getRandom(characters, 3);
 
-    // Récupère l'option coût max (par défaut 9999 si non précisé)
-    const coutMax = interaction.options.getInteger('cout_max') ?? 9999;
+    // Coût max PAR personnage
+    const coutMax = interaction.options.getInteger('cout_max') ?? 400;
 
-    // Pour les luminas, on va les répartir entre les 3 persos sans doublon
+    // Luminas : pas de doublon, coût max par perso
     let availableLuminas = [...lumina];
     let luminasByChar = [];
-    let totalCost = 0;
     for (let i = 0; i < selectedChars.length; i++) {
-      // On filtre pour ne pas dépasser le coût max total
-      const remainingCost = coutMax - totalCost;
-      const possible = availableLuminas.filter(l => l.cout <= remainingCost);
-      if (possible.length === 0) break;
-      const chosen = possible[Math.floor(Math.random() * possible.length)];
+      // Filtrer les luminas valides pour ce personnage
+      const possibles = availableLuminas.filter(l => l.cout <= coutMax);
+      if (possibles.length === 0) break;
+      // Prendre celui qui a le coût le plus proche du coutMax (le plus élevé possible)
+      const chosen = possibles.reduce((prev, curr) => (curr.cout > prev.cout ? curr : prev));
       luminasByChar.push(chosen);
-      totalCost += chosen.cout;
-      // On retire ce lumina pour les suivants
       availableLuminas = availableLuminas.filter(l => l.nom !== chosen.nom);
     }
 
-    // Pour les pictos, même logique : pas de doublon entre persos
+    // Pictos : pas de doublon entre persos
     let availablePictos = [...pictos];
     let pictosByChar = [];
     for (let i = 0; i < selectedChars.length; i++) {
       const charPictos = getRandom(availablePictos, 3);
       pictosByChar.push(charPictos);
-      // On retire ces pictos pour les suivants
       availablePictos = availablePictos.filter(p => !charPictos.includes(p));
     }
 
@@ -630,12 +626,11 @@ client.on('interactionCreate', async interaction => {
       message += `Pictos : ${pictosByChar[i].join(', ')}\n`;
       if (luminasByChar[i]) {
         message += `Lumina : ${luminasByChar[i].nom} (${luminasByChar[i].cout})\n`;
+      } else {
+        message += `Lumina : Aucun disponible pour ce coût max\n`;
       }
       message += `\n`;
     }
-
-    // Affichage du coût total des luminas
-    message += `**Coût total des Luminas :** ${totalCost} / ${coutMax}`;
 
     await interaction.reply({
       embeds: [{

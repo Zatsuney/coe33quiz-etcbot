@@ -35,7 +35,12 @@ const commands = [
     .setDescription('Affiche le nombre d\'extraits disponibles pour le blindtest'),
   new SlashCommandBuilder()
     .setName('randomise')
-    .setDescription('Sélectionne 3 personnages, 1 arme, 6 skills et 3 pictos aléatoires pour chacun')
+    .setDescription('Randomise les persos, pictos et luminas')
+    .addIntegerOption(option =>
+      option.setName('cout_max')
+        .setDescription('Coût maximum total en lumina')
+        .setRequired(false)
+    )
 ].map(cmd => cmd.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
