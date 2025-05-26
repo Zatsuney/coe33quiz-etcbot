@@ -8,7 +8,7 @@ const path = require('path');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection } = require('@discordjs/voice');
 const ffmpegPath = require('ffmpeg-static');
 const ffmpeg = require('fluent-ffmpeg');
-const { weapons, skills, pictos } = require('./randomizer.js');
+const { weapons, skills, pictos, lumina } = require('./randomizer.js');
 
 // Ajoute MessageContent ici :
 const client = new Client({
@@ -71,7 +71,7 @@ const quizQuestions = [
 {
   "question": "Quelle est la particularité du système de combat dans Clair Obscur: Expédition 33 ?",
   "options": [
-    "A) Il repose uniquement sur des choix narratifs",
+    "A) Il repose uniquement on des choix narratifs",
     "B) Il utilise un système de combat automatique sans intervention du joueur",
     "C) Il combine des mécaniques de tour par tour avec des éléments en temps réel",
     "D) Il est entièrement basé sur des cartes à collectionner"
@@ -361,6 +361,20 @@ function getRandom(arr, n) {
   return result;
 }
 
+// Ajoute cette fonction utilitaire quelque part avant le client.on('interactionCreate', ...)
+function randomLuminasWithMaxCost(luminaList, coutMax) {
+  const shuffled = luminaList.slice().sort(() => Math.random() - 0.5);
+  let total = 0;
+  const result = [];
+  for (const l of shuffled) {
+    if (total + l.cout <= coutMax) {
+      result.push(l);
+      total += l.cout;
+    }
+  }
+  return result;
+}
+
 client.on('interactionCreate', async interaction => {
   if (!interaction.isCommand()) return;
 
@@ -575,19 +589,61 @@ client.on('interactionCreate', async interaction => {
     const characters = Object.keys(weapons);
     const selectedChars = getRandom(characters, 3);
 
+    // Récupère l'option coût max (par défaut 9999 si non précisé)
+    const coutMax = interaction.options.getInteger('cout_max') ?? 9999;
+
+    // Pour les luminas, on va les répartir entre les 3 persos sans doublon
+    let availableLuminas = [...lumina];
+    let luminasByChar = [];
+    let totalCost = 0;
+    for (let i = 0; i < selectedChars.length; i++) {
+      // On filtre pour ne pas dépasser le coût max total
+      const remainingCost = coutMax - totalCost;
+      const possible = availableLuminas.filter(l => l.cout <= remainingCost);
+      if (possible.length === 0) break;
+      const chosen = possible[Math.floor(Math.random() * possible.length)];
+      luminasByChar.push(chosen);
+      totalCost += chosen.cout;
+      // On retire ce lumina pour les suivants
+      availableLuminas = availableLuminas.filter(l => l.nom !== chosen.nom);
+    }
+
+    // Pour les pictos, même logique : pas de doublon entre persos
+    let availablePictos = [...pictos];
+    let pictosByChar = [];
+    for (let i = 0; i < selectedChars.length; i++) {
+      const charPictos = getRandom(availablePictos, 3);
+      pictosByChar.push(charPictos);
+      // On retire ces pictos pour les suivants
+      availablePictos = availablePictos.filter(p => !charPictos.includes(p));
+    }
+
     let message = '';
-    for (const char of selectedChars) {
+    for (let i = 0; i < selectedChars.length; i++) {
+      const char = selectedChars[i];
       const weapon = getRandom(weapons[char], 1)[0];
       const charSkills = getRandom(skills[char], 6);
-      const charPictos = getRandom(pictos, 3);
 
       message += `**${char.charAt(0).toUpperCase() + char.slice(1)}**\n`;
       message += `Arme : ${weapon}\n`;
       message += `Skills : ${charSkills.join(', ')}\n`;
-      message += `Pictos : ${charPictos.join(', ')}\n\n`;
+      message += `Pictos : ${pictosByChar[i].join(', ')}\n`;
+      if (luminasByChar[i]) {
+        message += `Lumina : ${luminasByChar[i].nom} (${luminasByChar[i].cout})\n`;
+      }
+      message += `\n`;
     }
 
-    await interaction.reply(message);
+    // Affichage du coût total des luminas
+    message += `**Coût total des Luminas :** ${totalCost} / ${coutMax}`;
+
+    await interaction.reply({
+      embeds: [{
+        color: 0x3498db,
+        title: '🎲 Résultat du randomiseur',
+        description: message
+      }]
+    });
   }
 });
 
