@@ -361,6 +361,21 @@ function getRandom(arr, n) {
   return result;
 }
 
+// Fonction pour tirer plusieurs luminas dont la somme des coûts approche coutMax (glouton)
+function pickLuminasForChar(availableLuminas, coutMax) {
+  let choisis = [];
+  let total = 0;
+  // On trie du plus cher au moins cher
+  const tries = availableLuminas.slice().sort((a, b) => b.cout - a.cout);
+  for (const l of tries) {
+    if (total + l.cout <= coutMax) {
+      choisis.push(l);
+      total += l.cout;
+    }
+  }
+  return choisis;
+}
+
 // Ajoute cette fonction utilitaire quelque part avant le client.on('interactionCreate', ...)
 function randomLuminasWithMaxCost(luminaList, coutMax) {
   const shuffled = luminaList.slice().sort(() => Math.random() - 0.5);
@@ -589,20 +604,16 @@ client.on('interactionCreate', async interaction => {
     const characters = Object.keys(weapons);
     const selectedChars = getRandom(characters, 3);
 
-    // Coût max PAR personnage
     const coutMax = interaction.options.getInteger('cout_max') ?? 400;
 
-    // Luminas : pas de doublon, coût max par perso
+    // Luminas : pas de doublon, coût max par perso (somme)
     let availableLuminas = [...lumina];
     let luminasByChar = [];
     for (let i = 0; i < selectedChars.length; i++) {
-      // Filtrer les luminas valides pour ce personnage
-      const possibles = availableLuminas.filter(l => l.cout <= coutMax);
-      if (possibles.length === 0) break;
-      // Prendre celui qui a le coût le plus proche du coutMax (le plus élevé possible)
-      const chosen = possibles.reduce((prev, curr) => (curr.cout > prev.cout ? curr : prev));
-      luminasByChar.push(chosen);
-      availableLuminas = availableLuminas.filter(l => l.nom !== chosen.nom);
+      const choisis = pickLuminasForChar(availableLuminas, coutMax);
+      luminasByChar.push(choisis);
+      // On retire les luminas choisis pour ce perso
+      availableLuminas = availableLuminas.filter(l => !choisis.includes(l));
     }
 
     // Pictos : pas de doublon entre persos
@@ -624,10 +635,11 @@ client.on('interactionCreate', async interaction => {
       message += `Arme : ${weapon}\n`;
       message += `Skills : ${charSkills.join(', ')}\n`;
       message += `Pictos : ${pictosByChar[i].join(', ')}\n`;
-      if (luminasByChar[i]) {
-        message += `Lumina : ${luminasByChar[i].nom} (${luminasByChar[i].cout})\n`;
+      if (luminasByChar[i] && luminasByChar[i].length > 0) {
+        const total = luminasByChar[i].reduce((sum, l) => sum + l.cout, 0);
+        message += `Luminas (${total}/${coutMax}) : ${luminasByChar[i].map(l => `${l.nom} (${l.cout})`).join(', ')}\n`;
       } else {
-        message += `Lumina : Aucun disponible pour ce coût max\n`;
+        message += `Luminas : Aucun disponible pour ce coût max\n`;
       }
       message += `\n`;
     }
