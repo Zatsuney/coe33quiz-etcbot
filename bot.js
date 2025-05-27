@@ -3,7 +3,7 @@ const express = require('express'); // ← AJOUTE CETTE LIGNE
 const app = express();
 const { Client, GatewayIntentBits } = require('discord.js');
 const { addPoint, getLeaderboard, refreshUsernames, removeScore } = require('./scoreboard');
-const { loadStats, saveStats } = require('./stats.js');
+const { loadStats, saveStats, getGuildStats } = require('./stats.js');
 const fs = require('fs');
 const path = require('path');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection } = require('@discordjs/voice');
@@ -736,16 +736,16 @@ client.on('interactionCreate', async interaction => {
   }
 
   if (interaction.commandName === 'stats') {
-    const ranking = getActivityRanking();
+    const users = getGuildStats(interaction.guild.id);
     const pageSize = 10;
     let page = 0;
 
     function makeEmbed(page) {
       const start = page * pageSize;
       const end = start + pageSize;
-      const users = ranking.slice(start, end);
+      const guildStats = users.slice(start, end);
       let description = '';
-      for (const user of users) {
+      for (const user of guildStats) {
         description += `**#${user.rank}** <@${user.userId}>\n`;
         description += `Messages : ${user.messages}\n`;
         description += `Vocal : ${secondsToHMS(user.vocalTime)}\n`;
@@ -755,7 +755,7 @@ client.on('interactionCreate', async interaction => {
         color: 0x00bfff,
         title: '🏆 Classement d\'activité',
         description: description || 'Aucune donnée disponible.',
-        footer: { text: `Page ${page + 1} / ${Math.ceil(ranking.length / pageSize)}` }
+        footer: { text: `Page ${page + 1} / ${Math.ceil(users.length / pageSize)}` }
       };
     }
 
@@ -766,7 +766,7 @@ client.on('interactionCreate', async interaction => {
           type: 2, style: 1, custom_id: 'prev', emoji: { name: '⬅️' }, disabled: true
         },
         {
-          type: 2, style: 1, custom_id: 'next', emoji: { name: '➡️' }, disabled: ranking.length <= pageSize
+          type: 2, style: 1, custom_id: 'next', emoji: { name: '➡️' }, disabled: users.length <= pageSize
         }
       ]
     };
@@ -776,7 +776,7 @@ client.on('interactionCreate', async interaction => {
       components: [row]
     });
 
-    if (ranking.length <= pageSize) return;
+    if (users.length <= pageSize) return;
 
     const filter = i =>
       i.user.id === interaction.user.id &&
@@ -787,7 +787,7 @@ client.on('interactionCreate', async interaction => {
     collector.on('collect', async i => {
       if (i.customId === 'next') page++;
       if (i.customId === 'prev') page--;
-      const maxPage = Math.ceil(ranking.length / pageSize) - 1;
+      const maxPage = Math.ceil(users.length / pageSize) - 1;
       if (page < 0) page = 0;
       if (page > maxPage) page = maxPage;
 
