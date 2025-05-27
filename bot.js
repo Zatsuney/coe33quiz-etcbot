@@ -506,17 +506,20 @@ client.on('interactionCreate', async interaction => {
     });
 
     collector.on('end', async () => {
-      // Désactive les boutons à la fin
-      await interaction.editReply({
-        embeds: [makeEmbed(page)],
-        components: [{
-          type: 1,
-          components: [
-            { type: 2, style: 1, custom_id: 'prev_score', emoji: { name: '⬅️' }, disabled: true },
-            { type: 2, style: 1, custom_id: 'next_score', emoji: { name: '➡️' }, disabled: true }
-          ]
-        }]
-      });
+      try {
+        await interaction.editReply({
+          embeds: [makeEmbed(page)],
+          components: [{
+            type: 1,
+            components: [
+              { type: 2, style: 1, custom_id: 'prev_score', emoji: { name: '⬅️' }, disabled: true },
+              { type: 2, style: 1, custom_id: 'next_score', emoji: { name: '➡️' }, disabled: true }
+            ]
+          }]
+        });
+      } catch (e) {
+        // Ignore l'erreur si l'interaction est inconnue ou expirée
+      }
     });
   }
 
