@@ -3,7 +3,7 @@ const express = require('express'); // ← AJOUTE CETTE LIGNE
 const app = express();
 const { Client, GatewayIntentBits } = require('discord.js');
 const { addPoint, getLeaderboard, refreshUsernames, removeScore } = require('./scoreboard');
-const { loadStats, saveStats, getGuildStats } = require('./stats.js');
+const { loadStats, saveStats, getGuildStats, userJoinVocal, userLeaveVocal } = require('./stats.js');
 const fs = require('fs');
 const path = require('path');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection } = require('@discordjs/voice');
@@ -889,6 +889,25 @@ client.on('messageCreate', async message => {
 
 client.on('guildMemberRemove', member => {
   removeScore(member.id);
+});
+
+client.on('voiceStateUpdate', (oldState, newState) => {
+  // Ignore les bots
+  if ((oldState.member && oldState.member.user.bot) || (newState.member && newState.member.user.bot)) return;
+
+  // Join vocal
+  if (!oldState.channelId && newState.channelId) {
+    userJoinVocal(newState.guild.id, newState.id);
+  }
+  // Leave vocal
+  else if (oldState.channelId && !newState.channelId) {
+    userLeaveVocal(oldState.guild.id, oldState.id);
+  }
+  // Changement de salon vocal
+  else if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
+    userLeaveVocal(oldState.guild.id, oldState.id);
+    userJoinVocal(newState.guild.id, newState.id);
+  }
 });
 
 client.login(process.env.DISCORD_TOKEN);
