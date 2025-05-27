@@ -736,16 +736,31 @@ client.on('interactionCreate', async interaction => {
   }
 
   if (interaction.commandName === 'stats') {
-    const users = getGuildStats(interaction.guild.id);
+    const usersObj = getGuildStats(interaction.guild.id);
+    // Transforme en tableau et trie par activité (messages + vocalTime/60)
+    const users = Object.entries(usersObj)
+      .map(([userId, data]) => ({
+        userId,
+        messages: data.messages || 0,
+        vocalTime: data.vocalTime || 0,
+        channels: data.channels || {}
+      }))
+      .sort((a, b) => (b.messages + b.vocalTime / 60) - (a.messages + a.vocalTime / 60))
+      .map((user, idx) => ({
+        ...user,
+        rank: idx + 1,
+        topChannel: Object.entries(user.channels).sort((a, b) => b[1] - a[1])[0]?.[0] || null
+      }));
+
     const pageSize = 10;
     let page = 0;
 
     function makeEmbed(page) {
       const start = page * pageSize;
       const end = start + pageSize;
-      const guildStats = users.slice(start, end);
+      const pageUsers = users.slice(start, end);
       let description = '';
-      for (const user of guildStats) {
+      for (const user of pageUsers) {
         description += `**#${user.rank}** <@${user.userId}>\n`;
         description += `Messages : ${user.messages}\n`;
         description += `Vocal : ${secondsToHMS(user.vocalTime)}\n`;
@@ -755,7 +770,7 @@ client.on('interactionCreate', async interaction => {
         color: 0x00bfff,
         title: '🏆 Classement d\'activité',
         description: description || 'Aucune donnée disponible.',
-        footer: { text: `Page ${page + 1} / ${Math.ceil(users.length / pageSize)}` }
+        footer: { text: `Page ${page + 1} / ${Math.max(1, Math.ceil(users.length / pageSize))}` }
       };
     }
 
