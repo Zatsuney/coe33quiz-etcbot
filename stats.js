@@ -75,3 +75,7 @@ module.exports = {
   getUserStats,
   getGuildStats
 };
+
+const stats = require('./stats.js');
+const users = stats.getGuildStats(interaction.guild.id);
+// puis traite users pour le classement
