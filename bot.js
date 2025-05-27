@@ -824,9 +824,10 @@ client.on('interactionCreate', async interaction => {
 
   if (interaction.commandName === 'pstats') {
     const userId = interaction.user.id;
+    const guildId = interaction.guild.id;
     const stats = require('./stats.js');
     const { secondsToHMS } = require('./activityRank.js');
-    const userStats = stats.loadStats().users[userId];
+    const userStats = stats.getUserStats(guildId, userId);
 
     if (!userStats) {
       await interaction.reply({
@@ -840,7 +841,6 @@ client.on('interactionCreate', async interaction => {
       return;
     }
 
-    // Trouver le channel le plus utilisé
     let topChannel = null, topCount = 0;
     if (userStats.channels) {
       for (const [chan, count] of Object.entries(userStats.channels)) {
@@ -867,16 +867,9 @@ Channel le plus utilisé : ${topChannel ? `<#${topChannel}>` : 'N/A'}
 });
 
 client.on('messageCreate', async message => {
-  if (message.author.bot) return;
-
-  const stats = loadStats();
-  const userId = message.author.id;
-  const channelId = message.channel.id;
-
-  if (!stats.users[userId]) stats.users[userId] = { messages: 0, vocalTime: 0, lastJoin: null, channels: {} };
-  stats.users[userId].messages++;
-  stats.users[userId].channels[channelId] = (stats.users[userId].channels[channelId] || 0) + 1;
-  saveStats(stats);
+  if (message.author.bot || !message.guild) return;
+  const { incrementUserMessage } = require('./stats.js');
+  incrementUserMessage(message.guild.id, message.author.id, message.channel.id);
 });
 
 client.on('guildMemberRemove', member => {
