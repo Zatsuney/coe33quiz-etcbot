@@ -40,7 +40,13 @@ const commands = [
       option.setName('cout_max')
         .setDescription('Coût maximum total en lumina')
         .setRequired(false)
-    )
+    ),
+  new SlashCommandBuilder()
+    .setName('stats')
+    .setDescription('Affiche le classement d\'activité des membres'),
+  new SlashCommandBuilder()
+    .setName('pstats')
+    .setDescription('Affiche tes statistiques personnelles'),
 ].map(cmd => cmd.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);

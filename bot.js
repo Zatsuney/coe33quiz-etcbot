@@ -3,12 +3,14 @@ const express = require('express'); // ← AJOUTE CETTE LIGNE
 const app = express();
 const { Client, GatewayIntentBits } = require('discord.js');
 const { addPoint, getLeaderboard, refreshUsernames, removeScore } = require('./scoreboard');
+const { loadStats, saveStats } = require('./stats.js');
 const fs = require('fs');
 const path = require('path');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection } = require('@discordjs/voice');
 const ffmpegPath = require('ffmpeg-static');
 const ffmpeg = require('fluent-ffmpeg');
 const { weapons, skills, pictos, lumina } = require('./randomizer.js');
+const { getActivityRanking, secondsToHMS } = require('./activityRank.js');
 
 // Ajoute MessageContent ici :
 const client = new Client({
@@ -432,17 +434,90 @@ client.on('interactionCreate', async interaction => {
     const leaderboard = getLeaderboard(interaction.guild.id);
     if (leaderboard.length === 0) {
       await interaction.reply("Aucun score enregistré pour le moment.");
-    } else {
-      const board = leaderboard
-        .map((entry, i) => `**${i + 1}.** ${entry.username} : \`${entry.points}\` point(s)`)
-        .join('\n');
-      const embed = {
+      return;
+    }
+
+    const pageSize = 10;
+    let page = 0;
+
+    function makeEmbed(page) {
+      const start = page * pageSize;
+      const end = start + pageSize;
+      const users = leaderboard.slice(start, end);
+      let description = '';
+      for (let i = 0; i < users.length; i++) {
+        const entry = users[i];
+        description += `**${start + i + 1}.** ${entry.username} : \`${entry.points}\` point(s)\n`;
+      }
+      return {
         color: 0xf1c40f,
         title: '🏆 Classement Quiz Clair Obscur',
-        description: board
+        description: description || 'Aucun score à afficher.',
+        footer: { text: `Page ${page + 1} / ${Math.ceil(leaderboard.length / pageSize)}` }
       };
-      await interaction.reply({ embeds: [embed] });
     }
+
+    const row = {
+      type: 1,
+      components: [
+        {
+          type: 2, style: 1, custom_id: 'prev_score', emoji: { name: '⬅️' }, disabled: true
+        },
+        {
+          type: 2, style: 1, custom_id: 'next_score', emoji: { name: '➡️' }, disabled: leaderboard.length <= pageSize
+        }
+      ]
+    };
+
+    await interaction.reply({
+      embeds: [makeEmbed(page)],
+      components: [row]
+    });
+
+    if (leaderboard.length <= pageSize) return;
+
+    const filter = i =>
+      i.user.id === interaction.user.id &&
+      (i.customId === 'prev_score' || i.customId === 'next_score');
+
+    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
+
+    collector.on('collect', async i => {
+      if (i.customId === 'next_score') page++;
+      if (i.customId === 'prev_score') page--;
+      const maxPage = Math.ceil(leaderboard.length / pageSize) - 1;
+      if (page < 0) page = 0;
+      if (page > maxPage) page = maxPage;
+
+      await i.update({
+        embeds: [makeEmbed(page)],
+        components: [{
+          type: 1,
+          components: [
+            {
+              type: 2, style: 1, custom_id: 'prev_score', emoji: { name: '⬅️' }, disabled: page === 0
+            },
+            {
+              type: 2, style: 1, custom_id: 'next_score', emoji: { name: '➡️' }, disabled: page === maxPage
+            }
+          ]
+        }]
+      });
+    });
+
+    collector.on('end', async () => {
+      // Désactive les boutons à la fin
+      await interaction.editReply({
+        embeds: [makeEmbed(page)],
+        components: [{
+          type: 1,
+          components: [
+            { type: 2, style: 1, custom_id: 'prev_score', emoji: { name: '⬅️' }, disabled: true },
+            { type: 2, style: 1, custom_id: 'next_score', emoji: { name: '➡️' }, disabled: true }
+          ]
+        }]
+      });
+    });
   }
 
   if (interaction.commandName === 'rank') {
@@ -465,17 +540,24 @@ client.on('interactionCreate', async interaction => {
   }
 
   if (interaction.commandName === 'cmd') {
-    const embed = {
-      color: 0x8e44ad,
-      title: '📖 Commandes du bot Quiz Clair Obscur',
-      description: [
-        '**/quiz** — Lance une question de quiz',
-        '**/scoreboard** — Affiche le classement des joueurs',
-        '**/rank** — Affiche ton rang et ton score personnel',
-        '**/cmd** — Affiche cette liste de commandes'
-      ].join('\n')
-    };
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply({
+      embeds: [{
+        color: 0x7289da,
+        title: '📖 Commandes disponibles',
+        description: `
+/quiz — Question de quiz
+/scoreboard — Classement quiz
+/rank — Ton rang quiz
+/blindtest [numero] — Blindtest musical
+/leave — Quitter le vocal
+/qnumber — Nombre de questions quiz
+/btnumber — Nombre d'extraits blindtest
+/randomise [cout_max] — Random perso/pictos/luminas
+/stats — Classement activité
+/cmd — Liste des commandes
+        `
+      }]
+    });
   }
 
   // Ajoute cette commande dans ton interactionCreate :
@@ -652,6 +734,149 @@ client.on('interactionCreate', async interaction => {
       }]
     });
   }
+
+  if (interaction.commandName === 'stats') {
+    const ranking = getActivityRanking();
+    const pageSize = 10;
+    let page = 0;
+
+    function makeEmbed(page) {
+      const start = page * pageSize;
+      const end = start + pageSize;
+      const users = ranking.slice(start, end);
+      let description = '';
+      for (const user of users) {
+        description += `**#${user.rank}** <@${user.userId}>\n`;
+        description += `Messages : ${user.messages}\n`;
+        description += `Vocal : ${secondsToHMS(user.vocalTime)}\n`;
+        description += `Channel le plus utilisé : ${user.topChannel ? `<#${user.topChannel}>` : 'N/A'}\n\n`;
+      }
+      return {
+        color: 0x00bfff,
+        title: '🏆 Classement d\'activité',
+        description: description || 'Aucune donnée disponible.',
+        footer: { text: `Page ${page + 1} / ${Math.ceil(ranking.length / pageSize)}` }
+      };
+    }
+
+    const row = {
+      type: 1,
+      components: [
+        {
+          type: 2, style: 1, custom_id: 'prev', emoji: { name: '⬅️' }, disabled: true
+        },
+        {
+          type: 2, style: 1, custom_id: 'next', emoji: { name: '➡️' }, disabled: ranking.length <= pageSize
+        }
+      ]
+    };
+
+    await interaction.reply({
+      embeds: [makeEmbed(page)],
+      components: [row]
+    });
+
+    if (ranking.length <= pageSize) return;
+
+    const filter = i =>
+      i.user.id === interaction.user.id &&
+      (i.customId === 'prev' || i.customId === 'next');
+
+    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
+
+    collector.on('collect', async i => {
+      if (i.customId === 'next') page++;
+      if (i.customId === 'prev') page--;
+      const maxPage = Math.ceil(ranking.length / pageSize) - 1;
+      if (page < 0) page = 0;
+      if (page > maxPage) page = maxPage;
+
+      await i.update({
+        embeds: [makeEmbed(page)],
+        components: [{
+          type: 1,
+          components: [
+            {
+              type: 2, style: 1, custom_id: 'prev', emoji: { name: '⬅️' }, disabled: page === 0
+            },
+            {
+              type: 2, style: 1, custom_id: 'next', emoji: { name: '➡️' }, disabled: page === maxPage
+            }
+          ]
+        }]
+      });
+    });
+
+    collector.on('end', async () => {
+      // Désactive les boutons à la fin
+      await interaction.editReply({
+        embeds: [makeEmbed(page)],
+        components: [{
+          type: 1,
+          components: [
+            { type: 2, style: 1, custom_id: 'prev', emoji: { name: '⬅️' }, disabled: true },
+            { type: 2, style: 1, custom_id: 'next', emoji: { name: '➡️' }, disabled: true }
+          ]
+        }]
+      });
+    });
+  }
+
+  if (interaction.commandName === 'pstats') {
+    const userId = interaction.user.id;
+    const stats = require('./stats.js');
+    const { secondsToHMS } = require('./activityRank.js');
+    const userStats = stats.loadStats().users[userId];
+
+    if (!userStats) {
+      await interaction.reply({
+        embeds: [{
+          color: 0x00bfff,
+          title: '📊 Tes statistiques',
+          description: "Aucune donnée trouvée pour toi."
+        }],
+        ephemeral: true
+      });
+      return;
+    }
+
+    // Trouver le channel le plus utilisé
+    let topChannel = null, topCount = 0;
+    if (userStats.channels) {
+      for (const [chan, count] of Object.entries(userStats.channels)) {
+        if (count > topCount) {
+          topChannel = chan;
+          topCount = count;
+        }
+      }
+    }
+
+    await interaction.reply({
+      embeds: [{
+        color: 0x00bfff,
+        title: '📊 Tes statistiques',
+        description: `
+Messages envoyés : **${userStats.messages || 0}**
+Temps passé en vocal : **${secondsToHMS(userStats.vocalTime || 0)}**
+Channel le plus utilisé : ${topChannel ? `<#${topChannel}>` : 'N/A'}
+        `
+      }],
+      ephemeral: true
+    });
+  }
+});
+
+client.on('messageCreate', async message => {
+  if (message.author.bot) return;
+
+  const stats = loadStats();
+  const userId = message.author.id;
+  const channelId = message.channel.id;
+
+  if (!stats.users[userId]) stats.users[userId] = { messages: 0, vocalTime: 0, lastJoin: null, channels: {} };
+  stats.users[userId].messages++;
+  stats.users[userId].channels[channelId] = (stats.users[userId].channels[channelId] || 0) + 1;
+  saveStats(stats);
 });
 
 client.on('guildMemberRemove', member => {
