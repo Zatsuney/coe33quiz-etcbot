@@ -811,21 +811,24 @@ client.on('interactionCreate', async interaction => {
       });
     });
 
-    collector.on('end', async () => {
-      // Désactive les boutons à la fin
-      await interaction.editReply({
-        embeds: [makeEmbed(page)],
-        components: [{
-          type: 1,
-          components: [
-            { type: 2, style: 1, custom_id: 'prev', emoji: { name: '⬅️' }, disabled: true },
-            { type: 2, style: 1, custom_id: 'next', emoji: { name: '➡️' }, disabled: true }
-          ]
-        }]
-      });
+collector.on('end', async () => {
+  try {
+    await interaction.editReply({
+      embeds: [makeEmbed(page)],
+      components: [{
+        type: 1,
+        components: [
+          { type: 2, style: 1, custom_id: 'prev', emoji: { name: '⬅️' }, disabled: true },
+          { type: 2, style: 1, custom_id: 'next', emoji: { name: '➡️' }, disabled: true }
+        ]
+      }]
     });
+  } catch (e) {
+    // Ignore l'erreur si l'interaction est inconnue ou expirée
   }
-
+});
+  }
+  
   if (interaction.commandName === 'pstats') {
     const userId = interaction.user.id;
     const guildId = interaction.guild.id;
@@ -869,6 +872,7 @@ Channel le plus utilisé : ${topChannel ? `<#${topChannel}>` : 'N/A'}
     });
   }
 });
+
 
 client.on('messageCreate', async message => {
   if (message.author.bot || !message.guild) return;
