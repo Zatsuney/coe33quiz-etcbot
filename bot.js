@@ -739,21 +739,7 @@ client.on('interactionCreate', async interaction => {
   }
 
   if (interaction.commandName === 'stats') {
-    const usersObj = getGuildStats(interaction.guild.id);
-    // Transforme en tableau et trie par activité (messages + vocalTime/60)
-    const users = Object.entries(usersObj)
-      .map(([userId, data]) => ({
-        userId,
-        messages: data.messages || 0,
-        vocalTime: data.vocalTime || 0,
-        channels: data.channels || {}
-      }))
-      .sort((a, b) => (b.messages + b.vocalTime / 60) - (a.messages + a.vocalTime / 60))
-      .map((user, idx) => ({
-        ...user,
-        rank: idx + 1,
-        topChannel: Object.entries(user.channels).sort((a, b) => b[1] - a[1])[0]?.[0] || null
-      }));
+    const ranking = getActivityRanking(interaction.guild.id);
 
     const pageSize = 10;
     let page = 0;
@@ -761,7 +747,7 @@ client.on('interactionCreate', async interaction => {
     function makeEmbed(page) {
       const start = page * pageSize;
       const end = start + pageSize;
-      const pageUsers = users.slice(start, end);
+      const pageUsers = ranking.slice(start, end);
       let description = '';
       for (const user of pageUsers) {
         description += `**#${user.rank}** <@${user.userId}>\n`;
@@ -773,7 +759,7 @@ client.on('interactionCreate', async interaction => {
         color: 0x00bfff,
         title: '🏆 Classement d\'activité',
         description: description || 'Aucune donnée disponible.',
-        footer: { text: `Page ${page + 1} / ${Math.max(1, Math.ceil(users.length / pageSize))}` }
+        footer: { text: `Page ${page + 1} / ${Math.max(1, Math.ceil(ranking.length / pageSize))}` }
       };
     }
 
@@ -784,7 +770,7 @@ client.on('interactionCreate', async interaction => {
           type: 2, style: 1, custom_id: 'prev', emoji: { name: '⬅️' }, disabled: true
         },
         {
-          type: 2, style: 1, custom_id: 'next', emoji: { name: '➡️' }, disabled: users.length <= pageSize
+          type: 2, style: 1, custom_id: 'next', emoji: { name: '➡️' }, disabled: ranking.length <= pageSize
         }
       ]
     };
@@ -794,7 +780,7 @@ client.on('interactionCreate', async interaction => {
       components: [row]
     });
 
-    if (users.length <= pageSize) return;
+    if (ranking.length <= pageSize) return;
 
     const filter = i =>
       i.user.id === interaction.user.id &&
@@ -805,7 +791,7 @@ client.on('interactionCreate', async interaction => {
     collector.on('collect', async i => {
       if (i.customId === 'next') page++;
       if (i.customId === 'prev') page--;
-      const maxPage = Math.ceil(users.length / pageSize) - 1;
+      const maxPage = Math.ceil(ranking.length / pageSize) - 1;
       if (page < 0) page = 0;
       if (page > maxPage) page = maxPage;
 
