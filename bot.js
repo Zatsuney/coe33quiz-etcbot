@@ -512,8 +512,8 @@ client.on('interactionCreate', async interaction => {
           components: [{
             type: 1,
             components: [
-              { type: 2, style: 1, custom_id: 'prev_score', emoji: { name: '⬅️' }, disabled: true },
-              { type: 2, style: 1, custom_id: 'next_score', emoji: { name: '➡️' }, disabled: true }
+              { type: 2, style: 1, custom_id: 'prev', emoji: { name: '⬅️' }, disabled: true },
+              { type: 2, style: 1, custom_id: 'next', emoji: { name: '➡️' }, disabled: true }
             ]
           }]
         });
