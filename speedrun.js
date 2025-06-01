@@ -1,11 +1,22 @@
 const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args));
 
 const GAME_ID = 'ldew5jnd';
-// Remplace par l'ID réel de la catégorie Any% trouvé via l'API
-const ANY_PERCENT_CATEGORY_ID = 'jdzjy63k-68kwy1z8.10v3yypl-e8mgpge8.1dkrnm5l-r8r6er58.lx53k2g1';
+const ANY_PERCENT_CATEGORY_ID = 'jdzjy63k';
+
+// Variables et valeurs pour le filtre
+const VAR_PLATFORM = '68kvy1z8';
+const VAL_PC = '5q8ypryl';
+const VAR_NG = '10v3yypl';
+const VAL_NG = 'mln6e0nl';
+const VAR_DIFFICULTY = 'e8mgpge8';
+const VAL_STORY = 'zd3qj9k1';
 
 async function getTopRuns() {
-  let url = `https://www.speedrun.com/api/v1/runs?game=${GAME_ID}&category=${ANY_PERCENT_CATEGORY_ID}&status=verified&orderby=time&direction=asc&embed=players,category`;
+  let url = `https://www.speedrun.com/api/v1/runs?game=${GAME_ID}&category=${ANY_PERCENT_CATEGORY_ID}&status=verified&orderby=time&direction=asc`
+    + `&var=${VAR_PLATFORM}~${VAL_PC}`
+    + `&var=${VAR_NG}~${VAL_NG}`
+    + `&var=${VAR_DIFFICULTY}~${VAL_STORY}`
+    + `&embed=players,category`;
 
   const res = await fetch(url);
   const data = await res.json();
