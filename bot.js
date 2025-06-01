@@ -933,3 +933,8 @@ client.login(process.env.DISCORD_TOKEN);
 
 app.get('/', (req, res) => res.send('Bot is running!'));
 app.listen(process.env.PORT || 3000);
+
+// Ajoute ceci tout en haut de ton fichier principal (ex: bot.js)
+process.on('unhandledRejection', error => {
+  console.error('Unhandled promise rejection:', error);
+});
