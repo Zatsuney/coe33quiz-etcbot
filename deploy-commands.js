@@ -47,9 +47,6 @@ const commands = [
   new SlashCommandBuilder()
     .setName('pstats')
     .setDescription('Affiche tes statistiques personnelles'),
-  new SlashCommandBuilder()
-    .setName('speedrun')
-    .setDescription('Affiche le top speedrun pour Clair Obscur: Expédition 33'),
 ].map(cmd => cmd.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
