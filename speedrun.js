@@ -12,7 +12,7 @@ const VAR_DIFFICULTY = 'e8mgpge8';
 const VAL_STORY = 'zd3qj9k1';
 
 async function getTopRuns() {
-  let url = `https://www.speedrun.com/api/v1/runs?game=${GAME_ID}&category=${ANY_PERCENT_CATEGORY_ID}&status=verified&orderby=time&direction=asc`
+  let url = `https://www.speedrun.com/api/v1/runs?game=${GAME_ID}&category=${ANY_PERCENT_CATEGORY_ID}&status=verified&orderby=verify-date&direction=asc`
     + `&var=${VAR_PLATFORM}~${VAL_PC}`
     + `&var=${VAR_NG}~${VAL_NG}`
     + `&var=${VAR_DIFFICULTY}~${VAL_STORY}`
