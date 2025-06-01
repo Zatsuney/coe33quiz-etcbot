@@ -878,7 +878,7 @@ Channel le plus utilisé : ${topChannel ? `<#${topChannel}>` : 'N/A'}
     try {
       const runs = await getTopRuns();
       if (!runs.length) {
-        await interaction.editReply("Aucune run trouvé pour ce jeu !");
+        await interaction.editReply("Aucune run trouvée pour ce jeu !");
         return;
       }
       let desc = '';
@@ -893,6 +893,7 @@ Channel le plus utilisé : ${topChannel ? `<#${topChannel}>` : 'N/A'}
         }]
       });
     } catch (e) {
+      console.error("Erreur speedrun:", e); // <--- AJOUTE CETTE LIGNE
       await interaction.editReply("Erreur lors de la récupération des speedruns.");
     }
   }

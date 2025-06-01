@@ -11,6 +11,10 @@ async function getTopRuns(category = null) {
   const res = await fetch(url);
   const data = await res.json();
 
+  if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
+    return [];
+  }
+
   // On récupère les 3 meilleurs temps
   const runs = data.data.slice(0, 3).map(run => {
     const player = run.players.data[0]?.names?.international || run.players.data[0]?.name || 'Inconnu';
