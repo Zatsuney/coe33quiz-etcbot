@@ -2,7 +2,7 @@ const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args)
 
 const GAME_ID = 'ldew5jnd';
 // Remplace par l'ID réel de la catégorie Any% trouvé via l'API
-const ANY_PERCENT_CATEGORY_ID = 'jdzjy63k';
+const ANY_PERCENT_CATEGORY_ID = 'jdzjy63k-68kwy1z8.10v3yypl-e8mgpge8.1dkrnm5l-r8r6er58.lx53k2g1';
 
 async function getTopRuns() {
   let url = `https://www.speedrun.com/api/v1/runs?game=${GAME_ID}&category=${ANY_PERCENT_CATEGORY_ID}&status=verified&orderby=time&direction=asc&embed=players,category`;
