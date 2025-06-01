@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const GAME_ID = 'ldew5jnd'; // <-- ID fictif, à remplacer par le vrai si besoin
 
 async function getTopRuns(category = null) {
-  let url = `https://www.speedrun.com/api/v1/runs?game=${ldew5jnd}&status=verified&orderby=time&direction=asc&embed=players,category`;
+  let url = `https://www.speedrun.com/api/v1/runs?game=${GAME_ID}&status=verified&orderby=time&direction=asc&embed=players,category`;
 
   if (category) url += `&category=${category}`;
 
