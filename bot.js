@@ -872,6 +872,30 @@ Channel le plus utilisé : ${topChannel ? `<#${topChannel}>` : 'N/A'}
       ephemeral: true
     });
   }
+
+  if (interaction.commandName === 'speedrun') {
+    await interaction.deferReply();
+    try {
+      const runs = await getTopRuns();
+      if (!runs.length) {
+        await interaction.editReply("Aucune run trouvé pour ce jeu !");
+        return;
+      }
+      let desc = '';
+      runs.forEach((run, i) => {
+        desc += `**#${i + 1}** ${run.player} — ${formatTime(run.time)} (${run.category})${run.video ? ` [vidéo](${run.video})` : ''}\n`;
+      });
+      await interaction.editReply({
+        embeds: [{
+          color: 0x43b581,
+          title: '🏁 Top Speedruns Clair Obscur: Expédition 33',
+          description: desc
+        }]
+      });
+    } catch (e) {
+      await interaction.editReply("Erreur lors de la récupération des speedruns.");
+    }
+  }
 });
 
 

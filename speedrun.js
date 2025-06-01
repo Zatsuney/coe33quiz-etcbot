@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args));
 
 // Remplace par l'ID du jeu sur speedrun.com (à vérifier sur https://www.speedrun.com/games)
 const GAME_ID = 'ldew5jnd'; // <-- ID fictif, à remplacer par le vrai si besoin
