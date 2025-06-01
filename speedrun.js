@@ -1,12 +1,11 @@
 const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args));
 
-// Remplace par l'ID du jeu sur speedrun.com (à vérifier sur https://www.speedrun.com/games)
-const GAME_ID = 'ldew5jnd'; // <-- ID fictif, à remplacer par le vrai si besoin
+const GAME_ID = 'ldew5jnd';
+// Remplace par l'ID réel de la catégorie Any% trouvé via l'API
+const ANY_PERCENT_CATEGORY_ID = 'jdzjy63k';
 
-async function getTopRuns(category = null) {
-  let url = `https://www.speedrun.com/api/v1/runs?game=${GAME_ID}&status=verified&orderby=time&direction=asc&embed=players,category`;
-
-  if (category) url += `&category=${category}`;
+async function getTopRuns() {
+  let url = `https://www.speedrun.com/api/v1/runs?game=${GAME_ID}&category=${ANY_PERCENT_CATEGORY_ID}&status=verified&orderby=time&direction=asc&embed=players,category`;
 
   const res = await fetch(url);
   const data = await res.json();
@@ -31,7 +30,6 @@ async function getTopRuns(category = null) {
   return runs;
 }
 
-// Utilitaire pour formater le temps en HH:MM:SS
 function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
