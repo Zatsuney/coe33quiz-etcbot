@@ -3,7 +3,7 @@ const express = require('express'); // ← AJOUTE CETTE LIGNE
 const app = express();
 const { Client, GatewayIntentBits } = require('discord.js');
 const { addPoint, getLeaderboard, refreshUsernames, removeScore } = require('./scoreboard');
-const { loadStats, saveStats, getGuildStats, userJoinVocal, userLeaveVocal } = require('./stats.js');
+const { loadStats, saveStats, getGuildStats, userJoinVocal, userLeaveVocal, resetUserStats } = require('./stats.js');
 const fs = require('fs');
 const path = require('path');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection } = require('@discordjs/voice');
@@ -393,8 +393,10 @@ function randomLuminasWithMaxCost(luminaList, coutMax) {
   return result;
 }
 
+const ID_AUTORISE = '183997786952433664'; // Remplace par ton ID Discord
+
 client.on('interactionCreate', async interaction => {
-  if (!interaction.isCommand()) return;
+  if (!interaction.isChatInputCommand()) return;
 
   if (interaction.commandName === 'quiz') {
     const q = quizQuestions[Math.floor(Math.random() * quizQuestions.length)];
@@ -740,6 +742,8 @@ client.on('interactionCreate', async interaction => {
   }
 
   if (interaction.commandName === 'stats') {
+    // Supprime tout le bloc sub === 'reset'
+    // Par défaut ou si sub === 'classement'
     const ranking = getActivityRanking(interaction.guild.id);
 
     const pageSize = 10;
@@ -873,30 +877,22 @@ Channel le plus utilisé : ${topChannel ? `<#${topChannel}>` : 'N/A'}
     });
   }
 
-  if (interaction.commandName === 'speedrun') {
-    await interaction.deferReply();
-    try {
-      const runs = await getTopRuns();
-      if (!runs.length) {
-        await interaction.editReply("Aucune run trouvée pour ce jeu !");
-        return;
-      }
-      let desc = '';
-      runs.forEach((run, i) => {
-        desc += `**#${i + 1}** ${run.player} — ${formatTime(run.time)} (${run.category})${run.video ? ` [vidéo](${run.video})` : ''}\n`;
-      });
-      await interaction.editReply({
-        embeds: [{
-          color: 0x43b581,
-          title: '🏁 Top Speedruns Clair Obscur: Expédition 33',
-          description: desc
-        }]
-      });
-    } catch (e) {
-      console.error("Erreur speedrun:", e); // <--- AJOUTE CETTE LIGNE
-      await interaction.editReply("Erreur lors de la récupération des speedruns.");
+  if (interaction.commandName === 'resetstats') {
+    // Remplace par ton ID Discord
+    const ID_AUTORISE = '183997786952433664';
+    if (interaction.user.id !== ID_AUTORISE) {
+      return interaction.reply({ content: 'Tu n\'as pas la permission d\'utiliser cette commande.', ephemeral: true });
     }
-  }
+
+    const user = interaction.options.getUser('membre');
+    const success = resetUserStats(interaction.guild.id, user.id);
+    if (success) {
+      await interaction.reply(`Les stats de ${user.tag} ont été réinitialisées.`);
+    } else {
+      await interaction.reply(`Aucune stats trouvée pour ${user.tag}.`);
+    }
+    return;
+}
 });
 
 
@@ -933,8 +929,3 @@ client.login(process.env.DISCORD_TOKEN);
 
 app.get('/', (req, res) => res.send('Bot is running!'));
 app.listen(process.env.PORT || 3000);
-
-// Ajoute ceci tout en haut de ton fichier principal (ex: bot.js)
-process.on('unhandledRejection', error => {
-  console.error('Unhandled promise rejection:', error);
-});

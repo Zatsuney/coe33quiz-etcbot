@@ -64,6 +64,16 @@ function getGuildStats(guildId) {
   return stats[guildId]?.users || {};
 }
 
+function resetUserStats(guildId, userId) {
+  const stats = loadStats();
+  if (stats[guildId]?.users[userId]) {
+    delete stats[guildId].users[userId];
+    saveStats(stats);
+    return true;
+  }
+  return false;
+}
+
 module.exports = {
   incrementUserMessage,
   getUserMessages,
@@ -73,5 +83,6 @@ module.exports = {
   userLeaveVocal,
   getUserVocalTime,
   getUserStats,
-  getGuildStats
+  getGuildStats,
+  resetUserStats
 };

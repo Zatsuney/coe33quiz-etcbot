@@ -43,10 +43,22 @@ const commands = [
     ),
   new SlashCommandBuilder()
     .setName('stats')
-    .setDescription('Affiche le classement d\'activité des membres'),
+    .setDescription('Affiche le classement d\'activité des membres')
+    .addSubcommand(sub =>
+      sub.setName('classement')
+        .setDescription('Affiche le classement d\'activité des membres')
+    ),
   new SlashCommandBuilder()
     .setName('pstats')
     .setDescription('Affiche tes statistiques personnelles'),
+  new SlashCommandBuilder()
+    .setName('resetstats')
+    .setDescription('Réinitialise les stats d\'un membre')
+    .addUserOption(option =>
+      option.setName('membre')
+        .setDescription('Le membre dont les stats seront réinitialisées')
+        .setRequired(true)
+    ),
 ].map(cmd => cmd.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
