@@ -11,7 +11,7 @@ const ffmpegPath = require('ffmpeg-static');
 const ffmpeg = require('fluent-ffmpeg');
 const { weapons, skills, pictos, lumina } = require('./randomizer.js');
 const { getActivityRanking, secondsToHMS } = require('./activityRank.js');
-const { getTopRuns, formatTime } = require('./speedrun.js');
+// const { getTopRuns, formatTime } = require('./speedrun.js');
 
 // Ajoute MessageContent ici :
 const client = new Client({
