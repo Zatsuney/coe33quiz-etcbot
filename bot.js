@@ -425,9 +425,13 @@ client.on('interactionCreate', async interaction => {
       }
     });
 
-    collector.on('end', (collected, reason) => {
+    collector.on('end', async (collected, reason) => {
       if (reason !== 'answered') {
-        interaction.followUp('⏰ Temps écoulé ! Personne n\'a trouvé la bonne réponse.');
+        try {
+          await interaction.followUp('⏰ Temps écoulé ! Personne n\'a trouvé la bonne réponse.');
+        } catch (e) {
+          // Ignore l'erreur si l'interaction est expirée
+        }
       }
     });
   }
