@@ -53,11 +53,16 @@ const commands = [
     .setDescription('Affiche tes statistiques personnelles'),
   new SlashCommandBuilder()
     .setName('resetstats')
-    .setDescription('Réinitialise les stats d\'un membre')
+    .setDescription('Réinitialise les stats d\'un membre ou de tout le serveur')
     .addUserOption(option =>
       option.setName('membre')
         .setDescription('Le membre dont les stats seront réinitialisées')
-        .setRequired(true)
+        .setRequired(false)
+    )
+    .addBooleanOption(option =>
+      option.setName('all')
+        .setDescription('Réinitialiser les stats de tout le serveur ?')
+        .setRequired(false)
     ),
 ].map(cmd => cmd.toJSON());
 

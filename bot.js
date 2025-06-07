@@ -3,7 +3,7 @@ const express = require('express'); // ← AJOUTE CETTE LIGNE
 const app = express();
 const { Client, GatewayIntentBits } = require('discord.js');
 const { addPoint, getLeaderboard, refreshUsernames, removeScore } = require('./scoreboard');
-const { loadStats, saveStats, getGuildStats, userJoinVocal, userLeaveVocal, resetUserStats } = require('./stats.js');
+const { loadStats, saveStats, getGuildStats, userJoinVocal, userLeaveVocal, resetUserStats, resetAllStats } = require('./stats.js');
 const fs = require('fs');
 const path = require('path');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection } = require('@discordjs/voice');
@@ -882,21 +882,36 @@ Channel le plus utilisé : ${topChannel ? `<#${topChannel}>` : 'N/A'}
   }
 
   if (interaction.commandName === 'resetstats') {
-    // Remplace par ton ID Discord
     const ID_AUTORISE = '183997786952433664';
     if (interaction.user.id !== ID_AUTORISE) {
       return interaction.reply({ content: 'Tu n\'as pas la permission d\'utiliser cette commande.', ephemeral: true });
     }
 
+    const all = interaction.options.getBoolean('all');
     const user = interaction.options.getUser('membre');
-    const success = resetUserStats(interaction.guild.id, user.id);
-    if (success) {
-      await interaction.reply(`Les stats de ${user.tag} ont été réinitialisées.`);
-    } else {
-      await interaction.reply(`Aucune stats trouvée pour ${user.tag}.`);
+
+    if (all) {
+      const success = resetAllStats(interaction.guild.id);
+      if (success) {
+        await interaction.reply('Les stats de tous les membres ont été réinitialisées.');
+      } else {
+        await interaction.reply('Aucune stats à réinitialiser.');
+      }
+      return;
     }
-    return;
-}
+
+    if (user) {
+      const success = resetUserStats(interaction.guild.id, user.id);
+      if (success) {
+        await interaction.reply(`Les stats de ${user.tag} ont été réinitialisées.`);
+      } else {
+        await interaction.reply(`Aucune stats trouvée pour ${user.tag}.`);
+      }
+      return;
+    }
+
+    await interaction.reply({ content: 'Précise un membre ou utilise l\'option all.', ephemeral: true });
+  }
 });
 
 
