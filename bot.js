@@ -748,7 +748,7 @@ client.on('interactionCreate', async interaction => {
   if (interaction.commandName === 'stats') {
     // Supprime tout le bloc sub === 'reset'
     // Par défaut ou si sub === 'classement'
-    const ranking = getActivityRanking(interaction.guild.id);
+    const ranking = await getActivityRanking(guildId); // PAS sans await
 
     const pageSize = 10;
     let page = 0;
