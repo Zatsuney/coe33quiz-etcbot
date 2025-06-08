@@ -1,94 +1,95 @@
-const fs = require('fs');
-const path = require('path');
-const statsFile = path.join(__dirname, 'stats.json');
+const admin = require('firebase-admin');
+const db = admin.firestore();
 
-function loadStats() {
-  if (!fs.existsSync(statsFile)) return {};
-  return JSON.parse(fs.readFileSync(statsFile));
+// Incrémente le nombre de messages et le channel utilisé
+async function incrementUserMessage(guildId, userId, channelId) {
+  const ref = db.collection('guilds').doc(guildId).collection('users').doc(userId);
+  const doc = await ref.get();
+  let data = doc.exists ? doc.data() : { messages: 0, vocalTime: 0, lastJoin: null, channels: {} };
+  data.messages = (data.messages || 0) + 1;
+  data.channels[channelId] = (data.channels[channelId] || 0) + 1;
+  await ref.set(data);
 }
 
-function saveStats(stats) {
-  fs.writeFileSync(statsFile, JSON.stringify(stats, null, 2));
+// Récupère le nombre de messages d'un utilisateur
+async function getUserMessages(guildId, userId) {
+  const ref = db.collection('guilds').doc(guildId).collection('users').doc(userId);
+  const doc = await ref.get();
+  return doc.exists ? (doc.data().messages || 0) : 0;
 }
 
-function ensureGuild(stats, guildId) {
-  if (!stats[guildId]) stats[guildId] = { users: {} };
+// Marque l'entrée en vocal (stocke le timestamp)
+async function userJoinVocal(guildId, userId) {
+  const ref = db.collection('guilds').doc(guildId).collection('users').doc(userId);
+  const doc = await ref.get();
+  let data = doc.exists ? doc.data() : { messages: 0, vocalTime: 0, lastJoin: null, channels: {} };
+  data.lastJoin = Date.now();
+  await ref.set(data);
 }
 
-function incrementUserMessage(guildId, userId, channelId) {
-  const stats = loadStats();
-  ensureGuild(stats, guildId);
-  if (!stats[guildId].users[userId]) stats[guildId].users[userId] = { messages: 0, vocalTime: 0, lastJoin: null, channels: {} };
-  stats[guildId].users[userId].messages++;
-  if (channelId) {
-    stats[guildId].users[userId].channels[channelId] = (stats[guildId].users[userId].channels[channelId] || 0) + 1;
-  }
-  saveStats(stats);
-}
-
-function getUserMessages(guildId, userId) {
-  const stats = loadStats();
-  return stats[guildId]?.users[userId]?.messages || 0;
-}
-
-function userJoinVocal(guildId, userId) {
-  const stats = loadStats();
-  ensureGuild(stats, guildId);
-  if (!stats[guildId].users[userId]) stats[guildId].users[userId] = { messages: 0, vocalTime: 0, lastJoin: null, channels: {} };
-  stats[guildId].users[userId].lastJoin = Date.now();
-  saveStats(stats);
-}
-
-function userLeaveVocal(guildId, userId) {
-  const stats = loadStats();
-  if (!stats[guildId]?.users[userId] || !stats[guildId].users[userId].lastJoin) return;
+// Calcule le temps passé en vocal et remet lastJoin à null
+async function userLeaveVocal(guildId, userId) {
+  const ref = db.collection('guilds').doc(guildId).collection('users').doc(userId);
+  const doc = await ref.get();
+  if (!doc.exists || !doc.data().lastJoin) return;
+  let data = doc.data();
   const now = Date.now();
-  const duration = Math.floor((now - stats[guildId].users[userId].lastJoin) / 1000);
-  stats[guildId].users[userId].vocalTime = (stats[guildId].users[userId].vocalTime || 0) + duration;
-  stats[guildId].users[userId].lastJoin = null;
-  saveStats(stats);
+  const duration = Math.floor((now - data.lastJoin) / 1000);
+  data.vocalTime = (data.vocalTime || 0) + duration;
+  data.lastJoin = null;
+  await ref.set(data);
 }
 
-function getUserVocalTime(guildId, userId) {
-  const stats = loadStats();
-  return stats[guildId]?.users[userId]?.vocalTime || 0;
+// Récupère le temps passé en vocal
+async function getUserVocalTime(guildId, userId) {
+  const ref = db.collection('guilds').doc(guildId).collection('users').doc(userId);
+  const doc = await ref.get();
+  return doc.exists ? (doc.data().vocalTime || 0) : 0;
 }
 
-function getUserStats(guildId, userId) {
-  const stats = loadStats();
-  return stats[guildId]?.users[userId] || null;
+// Récupère toutes les stats d'un utilisateur
+async function getUserStats(guildId, userId) {
+  const ref = db.collection('guilds').doc(guildId).collection('users').doc(userId);
+  const doc = await ref.get();
+  return doc.exists ? doc.data() : null;
 }
 
-function getGuildStats(guildId) {
-  const stats = loadStats();
-  return stats[guildId]?.users || {};
+// Récupère toutes les stats du serveur (objet userId => stats)
+async function getGuildStats(guildId) {
+  const snapshot = await db.collection('guilds').doc(guildId).collection('users').get();
+  const users = {};
+  snapshot.forEach(doc => {
+    users[doc.id] = doc.data();
+  });
+  return users;
 }
 
-function resetUserStats(guildId, userId) {
-  const stats = loadStats();
-  if (stats[guildId]?.users[userId]) {
-    delete stats[guildId].users[userId];
-    saveStats(stats);
+// Reset les stats d'un utilisateur
+async function resetUserStats(guildId, userId) {
+  const ref = db.collection('guilds').doc(guildId).collection('users').doc(userId);
+  const doc = await ref.get();
+  if (doc.exists) {
+    await ref.delete();
     return true;
   }
   return false;
 }
 
-function resetAllStats(guildId) {
-  const stats = loadStats();
-  if (stats[guildId]) {
-    stats[guildId].users = {};
-    saveStats(stats);
-    return true;
-  }
-  return false;
+// Reset toutes les stats du serveur
+async function resetAllStats(guildId) {
+  const usersRef = db.collection('guilds').doc(guildId).collection('users');
+  const snapshot = await usersRef.get();
+  const batch = db.batch();
+  snapshot.forEach(doc => {
+    batch.delete(doc.ref);
+  });
+  await batch.commit();
+  return true;
 }
 
 module.exports = {
   incrementUserMessage,
   getUserMessages,
-  loadStats,
-  saveStats,
   userJoinVocal,
   userLeaveVocal,
   getUserVocalTime,

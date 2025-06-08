@@ -43,11 +43,7 @@ const commands = [
     ),
   new SlashCommandBuilder()
     .setName('stats')
-    .setDescription('Affiche le classement d\'activité des membres')
-    .addSubcommand(sub =>
-      sub.setName('classement')
-        .setDescription('Affiche le classement d\'activité des membres')
-    ),
+    .setDescription('Affiche le classement d\'activité des membres'),
   new SlashCommandBuilder()
     .setName('pstats')
     .setDescription('Affiche tes statistiques personnelles'),

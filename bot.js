@@ -11,6 +11,10 @@ const ffmpegPath = require('ffmpeg-static');
 const ffmpeg = require('fluent-ffmpeg');
 const { weapons, skills, pictos, lumina } = require('./randomizer.js');
 const { getActivityRanking, secondsToHMS } = require('./activityRank.js');
+const admin = require('firebase-admin');
+const serviceAccount = require('./nocobot-4fa85-firebase-adminsdk-fbsvc-d430578994.json');
+admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+const db = admin.firestore();
 // const { getTopRuns, formatTime } = require('./speedrun.js');
 
 // Ajoute MessageContent ici :
@@ -843,7 +847,7 @@ collector.on('end', async () => {
     const guildId = interaction.guild.id;
     const stats = require('./stats.js');
     const { secondsToHMS } = require('./activityRank.js');
-    const userStats = stats.getUserStats(guildId, userId);
+    const userStats = await stats.getUserStats(guildId, userId);
 
     if (!userStats) {
       await interaction.reply({
@@ -918,29 +922,34 @@ Channel le plus utilisé : ${topChannel ? `<#${topChannel}>` : 'N/A'}
 client.on('messageCreate', async message => {
   if (message.author.bot || !message.guild) return;
   const { incrementUserMessage } = require('./stats.js');
-  incrementUserMessage(message.guild.id, message.author.id, message.channel.id);
+
+  try {
+    await incrementUserMessage(message.guild.id, message.author.id, message.channel.id);
+  } catch (e) {
+    console.error("Erreur Firestore :", e);
+  }
 });
 
 client.on('guildMemberRemove', member => {
   removeScore(member.id);
 });
 
-client.on('voiceStateUpdate', (oldState, newState) => {
+client.on('voiceStateUpdate', async (oldState, newState) => {
   // Ignore les bots
   if ((oldState.member && oldState.member.user.bot) || (newState.member && newState.member.user.bot)) return;
 
   // Join vocal
   if (!oldState.channelId && newState.channelId) {
-    userJoinVocal(newState.guild.id, newState.id);
+    await userJoinVocal(newState.guild.id, newState.id);
   }
   // Leave vocal
   else if (oldState.channelId && !newState.channelId) {
-    userLeaveVocal(oldState.guild.id, oldState.id);
+    await userLeaveVocal(oldState.guild.id, oldState.id);
   }
   // Changement de salon vocal
   else if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
-    userLeaveVocal(oldState.guild.id, oldState.id);
-    userJoinVocal(newState.guild.id, newState.id);
+    await userLeaveVocal(oldState.guild.id, oldState.id);
+    await userJoinVocal(newState.guild.id, newState.id);
   }
 });
 
