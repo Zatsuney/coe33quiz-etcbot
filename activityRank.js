@@ -1,4 +1,4 @@
-const { loadStats } = require('./stats.js');
+const { getGuildStats } = require('./stats.js');
 
 function secondsToHMS(seconds) {
   const h = Math.floor(seconds / 3600);
@@ -7,9 +7,9 @@ function secondsToHMS(seconds) {
   return `${h}h ${m}m ${s}s`;
 }
 
-function getActivityRanking(guildId) {
-  const stats = loadStats();
-  const users = Object.entries(stats[guildId]?.users || {});
+async function getActivityRanking(guildId) {
+  const stats = await getGuildStats(guildId); // getGuildStats est asynchrone !
+  const users = Object.entries(stats || {});
 
   // Classement par activité (messages + vocalTime pondéré)
   users.sort((a, b) => (b[1].messages + b[1].vocalTime / 60) - (a[1].messages + a[1].vocalTime / 60));
