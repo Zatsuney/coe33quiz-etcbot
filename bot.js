@@ -11,10 +11,6 @@ const ffmpegPath = require('ffmpeg-static');
 const ffmpeg = require('fluent-ffmpeg');
 const { weapons, skills, pictos, lumina } = require('./randomizer.js');
 const { getActivityRanking, secondsToHMS } = require('./activityRank.js');
-const admin = require('firebase-admin');
-const serviceAccount = require('./nocobot-4fa85-firebase-adminsdk-fbsvc-d430578994.json');
-admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-const db = admin.firestore();
 // const { getTopRuns, formatTime } = require('./speedrun.js');
 
 // Ajoute MessageContent ici :

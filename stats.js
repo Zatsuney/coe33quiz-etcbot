@@ -1,5 +1,4 @@
-const admin = require('firebase-admin');
-const db = admin.firestore();
+const db = require('./firebase.js');
 
 // Incrémente le nombre de messages et le channel utilisé
 async function incrementUserMessage(guildId, userId, channelId) {
