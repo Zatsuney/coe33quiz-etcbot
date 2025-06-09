@@ -395,6 +395,10 @@ function randomLuminasWithMaxCost(luminaList, coutMax) {
 
 const ID_AUTORISE = '183997786952433664'; // Remplace par ton ID Discord
 
+client.once('ready', () => {
+  console.log(`Connecté en tant que ${client.user.tag}`);
+});
+
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -950,6 +954,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
 client.on('error', console.error);
 process.on('unhandledRejection', console.error);
+process.on('uncaughtException', console.error);
 
 console.log("Tentative de connexion Discord...");
 client.login(process.env.DISCORD_TOKEN);
