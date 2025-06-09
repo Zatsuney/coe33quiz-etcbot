@@ -948,6 +948,10 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
   }
 });
 
+client.on('error', console.error);
+process.on('unhandledRejection', console.error);
+
+console.log("Tentative de connexion Discord...");
 client.login(process.env.DISCORD_TOKEN);
 
 app.get('/', (req, res) => res.send('Bot is running!'));
