@@ -411,7 +411,6 @@ client.on('interactionCreate', async interaction => {
     };
     await interaction.reply({ embeds: [embed] });
 
-    // Collecteur de réponses textuelles (optionnel, à adapter selon ton besoin)
     const filter = response =>
       !response.author.bot &&
       ['A', 'B', 'C', 'D'].includes(response.content.trim().toUpperCase());
@@ -422,10 +421,10 @@ client.on('interactionCreate', async interaction => {
       const userAnswer = reply.content.trim().toUpperCase();
       if (userAnswer === q.answer) {
         addPoint(interaction.guild.id, reply.author.id, reply.member ? reply.member.displayName : reply.author.username.split('#')[0]);
-        interaction.followUp(`✅ Bravo ${reply.author.username} ! Bonne réponse !`);
+        interaction.followUp(`✅ Bravo ${reply.author.username} ! Bonne réponse !`).catch(() => {});
         collector.stop('answered');
       } else {
-        interaction.followUp(`❌ Mauvaise réponse, ${reply.author.username}. Essaie encore !`);
+        interaction.followUp(`❌ Mauvaise réponse, ${reply.author.username}. Essaie encore !`).catch(() => {});
       }
     });
 
@@ -434,7 +433,7 @@ client.on('interactionCreate', async interaction => {
         try {
           await interaction.followUp('⏰ Temps écoulé ! Personne n\'a trouvé la bonne réponse.');
         } catch (e) {
-          // Ignore l'erreur si l'interaction est expirée
+          // Ignore l'erreur si déjà répondu
         }
       }
     });
@@ -656,14 +655,14 @@ client.on('interactionCreate', async interaction => {
           reply.author.id,
           reply.member ? reply.member.displayName : reply.author.username.split('#')[0]
         );
-        interaction.followUp(`✅ Bravo ${reply.author.username} ! Bonne réponse !`);
+        interaction.followUp(`✅ Bravo ${reply.author.username} ! Bonne réponse !`).catch(() => {});
         collector.stop('answered');
       }
     });
 
     collector.on('end', (collected, reason) => {
       if (reason !== 'answered') {
-        interaction.followUp('⏰ Temps écoulé ! Personne n\'a trouvé la bonne réponse.');
+        interaction.followUp('⏰ Temps écoulé ! Personne n\'a trouvé la bonne réponse.').catch(() => {});
       }
     });
   }
