@@ -893,7 +893,7 @@ Channel le plus utilisé : ${topChannel ? `<#${topChannel}>` : 'N/A'}
     const user = interaction.options.getUser('membre');
 
     if (all) {
-      const success = resetAllStats(interaction.guild.id);
+      const success = await resetAllStats(interaction.guild.id);
       if (success) {
         await interaction.reply('Les stats de tous les membres ont été réinitialisées.');
       } else {
@@ -903,7 +903,7 @@ Channel le plus utilisé : ${topChannel ? `<#${topChannel}>` : 'N/A'}
     }
 
     if (user) {
-      const success = resetUserStats(interaction.guild.id, user.id);
+      const success = await resetUserStats(interaction.guild.id, user.id);
       if (success) {
         await interaction.reply(`Les stats de ${user.tag} ont été réinitialisées.`);
       } else {
